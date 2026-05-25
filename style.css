@@ -1019,63 +1019,171 @@ body {
   z-index: 10;
 }
 
-/* Corner Bracket Highlights — Word Cycling */
+/* Corner Bracket Highlights — Animated Word Cycling */
 .hero-word {
   position: relative;
   display: inline-block;
-  padding: 4px 18px;
+  padding: 6px 20px;
   color: inherit;
   font-family: var(--font-head);
-  transition: color 0.5s cubic-bezier(0.16, 1, 0.3, 1),
-              text-shadow 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: color 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+              text-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: default;
 }
+
+/* Active state — glowing text */
 .hero-word.bracket-wrap {
   color: var(--cyan);
-  text-shadow: 0 0 30px rgba(6,182,212,0.45), 0 0 60px rgba(6,182,212,0.15);
+  text-shadow: 0 0 35px rgba(6,182,212,0.5), 0 0 80px rgba(6,182,212,0.18);
 }
 
-.hero-word::before, .hero-word::after,
-.hero-word .bracket-corners::before, .hero-word .bracket-corners::after {
+/* Subtle background glow behind active word */
+.hero-word::after {
   content: '';
   position: absolute;
-  width: 14px; height: 14px;
-  border-color: var(--cyan);
-  border-style: solid;
-  box-shadow: 0 0 12px rgba(6,182,212,0.35);
+  inset: 0;
+  border-radius: 8px;
+  background: radial-gradient(ellipse at center, rgba(6,182,212,0.06) 0%, transparent 70%);
   opacity: 0;
-  transform: scale(0.6);
-  transition: opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1),
-              transform 0.45s cubic-bezier(0.16, 1, 0.3, 1),
-              box-shadow 0.45s ease;
+  transition: opacity 0.4s ease;
+  z-index: -1;
 }
-.hero-word.bracket-wrap::before,
-.hero-word.bracket-wrap::after,
-.hero-word.bracket-wrap .bracket-corners::before,
-.hero-word.bracket-wrap .bracket-corners::after {
+.hero-word.bracket-wrap::after {
   opacity: 1;
-  transform: scale(1);
-  box-shadow: 0 0 18px rgba(6,182,212,0.5);
 }
 
-/* Top Left Bracket */
-.hero-word::before {
-  top: -4px; left: -4px;
-  border-width: 2.5px 0 0 2.5px;
+/* Bracket corner elements — using the inner span */
+.hero-word .bracket-corners {
+  position: absolute;
+  inset: -6px;
+  pointer-events: none;
+  z-index: 1;
 }
-/* Top Right Bracket */
-.hero-word::after {
-  top: -4px; right: -4px;
-  border-width: 2.5px 2.5px 0 0;
-}
-/* Bottom Left Bracket */
-.hero-word .bracket-corners::before {
-  bottom: -4px; left: -4px;
-  border-width: 0 0 2.5px 2.5px;
-}
-/* Bottom Right Bracket */
+.hero-word .bracket-corners::before,
 .hero-word .bracket-corners::after {
-  bottom: -4px; right: -4px;
-  border-width: 0 2.5px 2.5px 0;
+  content: '';
+  position: absolute;
+  width: 16px; height: 16px;
+  border-color: var(--cyan);
+  border-style: solid;
+  opacity: 0;
+  transition: none; /* Controlled by animation */
+}
+
+/* We use box-shadows on a pseudo for the other two corners — 
+   but cleaner approach: use the hero-word::before for scanning underline */
+.hero-word::before {
+  content: '';
+  position: absolute;
+  bottom: -2px; left: 0;
+  width: 100%; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 0 12px rgba(6,182,212,0.4);
+}
+.hero-word.bracket-wrap::before {
+  transform: scaleX(1);
+}
+
+/* Top-left corner */
+.hero-word .bracket-corners::before {
+  top: 0; left: 0;
+  border-width: 3px 0 0 3px;
+  border-radius: 2px 0 0 0;
+}
+/* Bottom-right corner */
+.hero-word .bracket-corners::after {
+  bottom: 0; right: 0;
+  border-width: 0 3px 3px 0;
+  border-radius: 0 0 2px 0;
+}
+
+/* When bracket-wrap is active → animate corners IN */
+.hero-word.bracket-wrap .bracket-corners::before {
+  animation: bracketSlideInTL 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.hero-word.bracket-wrap .bracket-corners::after {
+  animation: bracketSlideInBR 0.45s 0.08s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* When bracket-wrap is removed → animate corners OUT */
+.hero-word:not(.bracket-wrap) .bracket-corners::before {
+  animation: bracketSlideOutTL 0.3s cubic-bezier(0.7, 0, 0.84, 0) forwards;
+}
+.hero-word:not(.bracket-wrap) .bracket-corners::after {
+  animation: bracketSlideOutBR 0.3s 0.05s cubic-bezier(0.7, 0, 0.84, 0) forwards;
+}
+
+/* Additional top-right and bottom-left corners via box-shadow trick on the bracket-corners element itself */
+.hero-word .bracket-corners {
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+.hero-word.bracket-wrap .bracket-corners {
+  opacity: 1;
+}
+
+/* ── BRACKET KEYFRAME ANIMATIONS ── */
+@keyframes bracketSlideInTL {
+  0% {
+    opacity: 0;
+    transform: translate(-10px, -10px) scale(0.5);
+  }
+  60% {
+    opacity: 1;
+    transform: translate(2px, 2px) scale(1.1);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+    box-shadow: 0 0 14px rgba(6,182,212,0.5), 0 0 30px rgba(6,182,212,0.15);
+  }
+}
+
+@keyframes bracketSlideInBR {
+  0% {
+    opacity: 0;
+    transform: translate(10px, 10px) scale(0.5);
+  }
+  60% {
+    opacity: 1;
+    transform: translate(-2px, -2px) scale(1.1);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+    box-shadow: 0 0 14px rgba(6,182,212,0.5), 0 0 30px rgba(6,182,212,0.15);
+  }
+}
+
+@keyframes bracketSlideOutTL {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-8px, -8px) scale(0.4);
+  }
+}
+
+@keyframes bracketSlideOutBR {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(8px, 8px) scale(0.4);
+  }
+}
+
+/* Pulsing glow on active bracket corners */
+.hero-word.bracket-wrap .bracket-corners::before,
+.hero-word.bracket-wrap .bracket-corners::after {
+  filter: drop-shadow(0 0 6px rgba(6,182,212,0.6));
 }
 
 /* 2x2 Status Indicators Grid (Bottom Left) */
