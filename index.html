@@ -127,66 +127,123 @@
 
   <!-- ===== HERO ===== -->
   <section class="hero" id="home">
+    <!-- Slanted Background Blades -->
+    <div class="slanted-blades">
+      <div class="blade"></div>
+      <div class="blade"></div>
+      <div class="blade"></div>
+      <div class="blade"></div>
+      <div class="blade"></div>
+    </div>
+    
     <div class="hero-grid-overlay"></div>
 
-    <div class="hero-container">
-      <div class="hero-badge">
-        <span class="badge-dot"></span>
-        Live on Vara Network
-        <span class="badge-arrow">→</span>
+    <div class="container hero-split-layout">
+      <!-- Left Column: Copy & CTAs -->
+      <div class="hero-left-col">
+        <div class="hero-badge">
+          <span class="badge-dot"></span>
+          Live on Vara Testnet
+          <span class="badge-arrow">→</span>
+        </div>
+
+        <h1 class="hero-title" style="text-align: left;">
+          Real-Time <br/>
+          Money <span class="bracket-wrap">Streaming<span class="bracket-corners"></span></span>
+        </h1>
+
+        <p class="hero-subtitle" style="text-align: left; margin: 0 0 40px 0;">
+          Real-time token streaming on Vara. Composable smart contracts for payroll, subscriptions,
+          bounties, grants, and revenue sharing.
+        </p>
+
+        <div class="hero-cta" style="justify-content: flex-start; margin-bottom: 24px;">
+          <button class="btn-primary btn-lg" id="launch-app-btn">
+            <span class="btn-shimmer"></span>
+            Integrate (10 min) →
+          </button>
+          <button class="btn-outline btn-lg" id="try-demo-btn">
+            Launch App ↗
+          </button>
+        </div>
+        
+        <div style="text-align: left; margin-bottom: 60px;">
+          <a href="app.html#leaderboard" style="color: var(--cyan); text-decoration: none; font-size: 0.9rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;" onmouseover="this.style.color='#6366f1'" onmouseout="this.style.color='#06b6d4'">Join Campaign →</a>
+        </div>
+
+        <!-- 2x2 Status Grid at Bottom Left -->
+        <div class="hero-status-grid">
+          <div class="status-card-lp green">
+            <span class="s-label">● Status</span>
+            <span class="s-value">Vara Testnet (Live)</span>
+          </div>
+          <div class="status-card-lp cyan">
+            <span class="s-label">● Contracts</span>
+            <span class="s-value">StreamCore + TokenVault</span>
+          </div>
+          <div class="status-card-lp purple">
+            <span class="s-label">● Security</span>
+            <span class="s-value">Audited Core + Tests</span>
+          </div>
+          <div class="status-card-lp gold">
+            <span class="s-label">● Pilots</span>
+            <span class="s-value">XP Campaign Slots Open</span>
+          </div>
+        </div>
       </div>
 
-      <h1 class="hero-title">
-        Money That Flows
-        <span class="title-gradient">Every Second.</span>
-      </h1>
-
-      <p class="hero-subtitle">
-        HyperFlow is a hyper-speed token streaming protocol on Vara. Stream payroll, bounties, subscriptions,
-        and revenue share — all settled <em>per-second</em>, on-chain.
-      </p>
-
-      <div class="hero-cta">
-        <button class="btn-primary btn-lg" id="launch-app-btn">
-          <span class="btn-shimmer"></span>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5,3 19,12 5,21"/></svg>
-          Launch App
-        </button>
-        <a href="#how-it-works" class="btn-outline btn-lg" id="learn-more-btn">
-          Explore Protocol
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
-        </a>
-      </div>
-
-      <!-- Live Stream Counter -->
-      <div class="hero-stream-counter" id="stream-counter">
-        <div class="counter-card" id="counter-tvl">
-          <span class="counter-label">Total Value Streamed</span>
-          <span class="counter-value" data-target="4820391">$0</span>
-          <span class="counter-suffix">USD</span>
-        </div>
-        <div class="counter-divider"></div>
-        <div class="counter-card" id="counter-streams">
-          <span class="counter-label">Active Streams</span>
-          <span class="counter-value" data-target="1247">0</span>
-          <span class="counter-tick" id="tick-dot">●</span>
-        </div>
-        <div class="counter-divider"></div>
-        <div class="counter-card" id="counter-rate">
-          <span class="counter-label">Flow Rate</span>
-          <span class="counter-value" id="flow-rate">$0.00</span>
-          <span class="counter-suffix">/sec</span>
+      <!-- Right Column: Overlapping Glass Preview Terminal -->
+      <div class="hero-right-col" data-aos>
+        <div class="preview-terminal">
+          <div class="terminal-head">
+            <div class="terminal-dots">
+              <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+            </div>
+            <span class="terminal-title">stream-preview</span>
+            <span class="terminal-badge"><span class="pulse-dot"></span>Streaming</span>
+          </div>
+          <div class="terminal-body">
+            <div class="terminal-row-flow">
+              <div class="address-box">
+                <span class="box-lbl">Sender</span>
+                <span class="box-val">company.vara</span>
+              </div>
+              <div class="flow-arrow-indicator">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="arrow-svg" style="animation: pulseDot 1.5s infinite;"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                <span class="arrow-rate-text">$0.00327/sec</span>
+              </div>
+              <div class="address-box">
+                <span class="box-lbl">Receiver</span>
+                <span class="box-val">alice.vara</span>
+              </div>
+            </div>
+            
+            <div class="terminal-panels">
+              <div class="panel-box green-glow">
+                <span class="panel-lbl">WITHDRAWABLE</span>
+                <span class="panel-val green-text">$<span id="stream-balance">5284.3847</span></span>
+              </div>
+              <div class="panel-box">
+                <span class="panel-lbl">BUFFER</span>
+                <span class="panel-val" style="color: #fff;">8h remaining</span>
+              </div>
+            </div>
+            
+            <div class="terminal-footer">
+              <span>● Simulated preview · Testnet data</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Hero Visual - Stream Visualizer -->
-    <div class="hero-visual">
-      <canvas id="streamCanvas"></canvas>
-      <div class="visual-glow"></div>
+    <!-- ===== FLOATING ACTIVE TOAST ===== -->
+    <div class="bottom-right-toast" data-aos>
+      <span class="toast-dot"></span>
+      <span class="toast-txt">Active Campaign: Join the leaderboard & earn XP rewards. <a href="app.html#leaderboard" style="color:var(--cyan);text-decoration:none;font-weight:700">View →</a></span>
     </div>
 
-    <div class="hero-scroll-hint">
+    <div class="hero-scroll-hint" style="left: 50%;">
       <div class="scroll-line"></div>
       <span>Scroll</span>
     </div>
