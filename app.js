@@ -120,6 +120,7 @@ function initParticleCanvas() {
 /* ── HERO STREAM CANVAS ─────────────────────────────────────── */
 function initStreamCanvas() {
   const canvas = document.getElementById('streamCanvas');
+  if (!canvas) return;
   const ctx    = canvas.getContext('2d');
   let W, H;
 
@@ -217,15 +218,18 @@ function initCounters() {
   // Hero counters
   const tvlEl = document.querySelector('#counter-tvl .counter-value');
   const streamsEl = document.querySelector('#counter-streams .counter-value');
+  const streamCounterEl = document.getElementById('stream-counter');
 
-  const heroObs = new IntersectionObserver((entries) => {
-    if (entries[0].isIntersecting) {
-      animateCounter(tvlEl, 4820391, '$', '', 2500);
-      animateCounter(streamsEl, 1247, '', '', 2000);
-      heroObs.disconnect();
-    }
-  }, { threshold: 0.5 });
-  heroObs.observe(document.getElementById('stream-counter'));
+  if (tvlEl && streamsEl && streamCounterEl) {
+    const heroObs = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
+        animateCounter(tvlEl, 4820391, '$', '', 2500);
+        animateCounter(streamsEl, 1247, '', '', 2000);
+        heroObs.disconnect();
+      }
+    }, { threshold: 0.5 });
+    heroObs.observe(streamCounterEl);
+  }
 
   // Stats section counters
   const statNums = document.querySelectorAll('.stat-number[data-target]');
@@ -471,6 +475,26 @@ function initLiveTVLTicker() {
   }, 3000);
 }
 
+/* ── BRACKET WORD CYCLER (hero title) ──────────────────────── */
+function initBracketCycler() {
+  const words = document.querySelectorAll('.hero-title .hero-word');
+  if (!words.length) return;
+
+  let currentIndex = 0;
+  const CYCLE_DURATION = 2000; // 2 seconds per word
+
+  function cycle() {
+    // Remove bracket-wrap from current word
+    words[currentIndex].classList.remove('bracket-wrap');
+    // Advance to next word (loop)
+    currentIndex = (currentIndex + 1) % words.length;
+    // Add bracket-wrap to new word
+    words[currentIndex].classList.add('bracket-wrap');
+  }
+
+  setInterval(cycle, CYCLE_DURATION);
+}
+
 /* ── INIT ALL ───────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
   initParticleCanvas();
@@ -488,4 +512,5 @@ document.addEventListener('DOMContentLoaded', () => {
   initScrollProgress();
   initSectionGlow();
   initLiveTVLTicker();
+  initBracketCycler();
 });
