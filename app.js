@@ -251,6 +251,7 @@ function initCounters() {
 /* ── LIVE FLOW RATE TICKER ──────────────────────────────────── */
 function initFlowTicker() {
   const flowRateEl = document.getElementById('flow-rate');
+  if (!flowRateEl) return;
   let base = 0.0482;
 
   function updateRate() {
