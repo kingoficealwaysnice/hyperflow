@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HyperFlow Docs — God-Tier Streaming Protocol on Vara</title>
+  <meta name="description" content="Technical documentation and integration guide for the HyperFlow token streaming protocol on Vara." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* Docs Specific Layout (Luxury Aurora style) */
+    .docs-body {
+      background: #03030d;
+      color: #f1f5f9;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .docs-container {
+      max-width: 1280px;
+      margin: 80px auto 0;
+      padding: 40px 24px;
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 48px;
+      flex: 1;
+      width: 100%;
+    }
+
+    /* Fixed Left Navigation */
+    .docs-sidebar {
+      position: sticky;
+      top: 120px;
+      height: calc(100vh - 160px);
+      overflow-y: auto;
+      padding-right: 16px;
+      border-right: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    
+    .docs-sidebar::-webkit-scrollbar { width: 3px; }
+    .docs-sidebar::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.2); border-radius: 4px; }
+    
+    .sidebar-sect {
+      margin-bottom: 28px;
+    }
+    
+    .sidebar-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #64748b;
+      margin-bottom: 12px;
+    }
+    
+    .sidebar-links {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    
+    .sidebar-link {
+      display: block;
+      color: #94a3b8;
+      text-decoration: none;
+      font-size: 0.88rem;
+      padding: 6px 12px;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+    
+    .sidebar-link:hover {
+      color: #06b6d4;
+      background: rgba(6, 182, 212, 0.05);
+    }
+    
+    .sidebar-link.active {
+      color: #6366f1;
+      font-weight: 600;
+      background: rgba(99, 102, 241, 0.08);
+      border-left: 2px solid #6366f1;
+      border-radius: 0 6px 6px 0;
+    }
+
+    /* Docs Content Styling */
+    .docs-content {
+      max-width: 860px;
+      padding-bottom: 100px;
+    }
+    
+    .docs-section {
+      margin-bottom: 80px;
+      scroll-margin-top: 120px;
+    }
+    
+    .docs-section h1 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 2.5rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    .docs-section h2 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-top: 40px;
+      margin-bottom: 16px;
+      color: #f1f5f9;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .docs-section p {
+      color: #94a3b8;
+      font-size: 1rem;
+      line-height: 1.75;
+      margin-bottom: 24px;
+    }
+    
+    /* Luxury tables */
+    .docs-table-wrap {
+      background: rgba(255, 255, 255, 0.01);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 16px;
+      overflow: hidden;
+      margin: 24px 0;
+      backdrop-filter: blur(20px);
+    }
+    
+    .docs-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+    
+    .docs-table th {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 14px 20px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #64748b;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    
+    .docs-table td {
+      padding: 16px 20px;
+      font-size: 0.9rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+      color: #cbd5e1;
+    }
+    
+    .docs-table tr:last-child td { border-bottom: none; }
+    
+    /* Code styling */
+    code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.88rem;
+      background: rgba(255, 255, 255, 0.04);
+      padding: 3px 6px;
+      border-radius: 4px;
+      color: #06b6d4;
+    }
+    
+    .code-block-wrap {
+      position: relative;
+      margin: 24px 0;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    
+    .code-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 18px;
+      background: rgba(255, 255, 255, 0.02);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      font-size: 0.75rem;
+      color: #64748b;
+    }
+    
+    .btn-copy {
+      background: none;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #64748b;
+      padding: 4px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.72rem;
+      transition: all 0.2s;
+    }
+    .btn-copy:hover {
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.2);
+      background: rgba(255,255,255,0.02);
+    }
+    
+    pre {
+      margin: 0;
+      padding: 20px;
+      overflow-x: auto;
+    }
+    
+    pre code {
+      background: none;
+      padding: 0;
+      color: #f1f5f9;
+      font-size: 0.85rem;
+      line-height: 1.6;
+    }
+    
+    .c-key { color: #f472b6; }
+    .c-str { color: #34d399; }
+    .c-num { color: #fbbf24; }
+    .c-var { color: #818cf8; }
+    .c-com { color: #475569; }
+
+    /* Bento card style for quick start steps */
+    .steps-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin: 32px 0;
+    }
+    
+    .step-card {
+      background: rgba(255, 255, 255, 0.015);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      border-radius: 20px;
+      padding: 28px;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s;
+    }
+    .step-card:hover {
+      background: rgba(255, 255, 255, 0.03);
+      border-color: rgba(99, 102, 241, 0.3);
+      transform: translateY(-4px);
+    }
+    
+    .step-num {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 2.5rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #6366f1 0%, #06b6d4 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+    }
+    
+    .step-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #f1f5f9;
+      margin-bottom: 8px;
+    }
+    
+    .step-desc {
+      color: #64748b;
+      font-size: 0.88rem;
+      line-height: 1.6;
+    }
+    
+    .api-tag {
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      margin-right: 8px;
+    }
+    .api-tag.get { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2); }
+    .api-tag.post { background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.2); }
+    
+    @media (max-width: 900px) {
+      .docs-container {
+        grid-template-columns: 1fr;
+      }
+      .docs-sidebar {
+        display: none;
+      }
+      .steps-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body class="docs-body">
+
+  <!-- ===== NAVIGATION ===== -->
+  <nav id="navbar" class="navbar scrolled">
+    <div class="nav-container">
+      <a href="index.html" class="nav-logo">
+        <div class="logo-icon">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+            <path d="M4 14 C4 8 8 4 14 4 C18 4 21 6 23 10" stroke="url(#logoGrad)" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M24 14 C24 20 20 24 14 24 C10 24 7 22 5 18" stroke="url(#logoGrad2)" stroke-width="2.5" stroke-linecap="round"/>
+            <circle cx="14" cy="14" r="3" fill="url(#logoGrad)"/>
+            <defs>
+              <linearGradient id="logoGrad" x1="0" y1="0" x2="28" y2="28" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#6366f1"/>
+                <stop offset="100%" stop-color="#06b6d4"/>
+              </linearGradient>
+              <linearGradient id="logoGrad2" x1="28" y1="0" x2="0" y2="28" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#a855f7"/>
+                <stop offset="100%" stop-color="#6366f1"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <span class="logo-text">HyperFlow</span>
+      </a>
+
+      <ul class="nav-links">
+        <li><a href="index.html#use-cases" class="nav-link">Use Cases</a></li>
+        <li><a href="index.html#how-it-works" class="nav-link">How It Works</a></li>
+        <li><a href="index.html#features" class="nav-link">Features</a></li>
+        <li><a href="docs.html" class="nav-link active">Docs</a></li>
+      </ul>
+
+      <div class="nav-actions">
+        <a href="https://github.com/BlockX-AI/GrowStreams_Backend" target="_blank" class="btn-ghost">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+          GitHub
+        </a>
+        <a href="app.html" class="btn-primary">
+          <span class="btn-shimmer"></span>
+          Launch App
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ===== DOCS MAIN CONTAINER ===== -->
+  <div class="docs-container">
+    
+    <!-- LEFT SIDEBAR -->
+    <aside class="docs-sidebar">
+      <div class="sidebar-sect">
+        <h3 class="sidebar-title">Getting Started</h3>
+        <ul class="sidebar-links">
+          <li><a href="#introduction" class="sidebar-link active">Introduction</a></li>
+          <li><a href="#quick-start" class="sidebar-link">Quick Start</a></li>
+          <li><a href="#architecture" class="sidebar-link">Architecture</a></li>
+        </ul>
+      </div>
+      <div class="sidebar-sect">
+        <h3 class="sidebar-title">Reference</h3>
+        <ul class="sidebar-links">
+          <li><a href="#contracts" class="sidebar-link">Contracts Registry</a></li>
+          <li><a href="#api" class="sidebar-link">REST API Reference</a></li>
+          <li><a href="#sdk" class="sidebar-link">SDK Integration</a></li>
+        </ul>
+      </div>
+    </aside>
+
+    <!-- RIGHT CONTENT AREA -->
+    <main class="docs-content">
+      
+      <!-- INTRODUCTION -->
+      <section class="docs-section" id="introduction">
+        <h1>Protocol Documentation</h1>
+        <p>Welcome to HyperFlow, a next-generation real-time token streaming protocol built natively on the high-speed Vara Network. HyperFlow enables frictionless, continuous payment distribution per block, designed to support modern teams, DAOs, and digital subscriptions.</p>
+        
+        <h2>Why HyperFlow?</h2>
+        <p>Traditional payroll and payout methods batch operations into massive weekly or monthly transfers. HyperFlow replaces these with <strong>continuous streams</strong>. Instead of waiting, the recipient's wallet balance increases dynamically every second. Our architecture is trustless, non-custodial, and engineered using Vara’s advanced actor model messaging system.</p>
+      </section>
+
+      <!-- QUICK START -->
+      <section class="docs-section" id="quick-start">
+        <h1>Quick Start Guide</h1>
+        <p>Get up and running with HyperFlow on the Vara Testnet in four simple steps.</p>
+        
+        <div class="steps-grid">
+          <div class="step-card">
+            <div class="step-num">01</div>
+            <div class="step-title">Connect SubWallet</div>
+            <div class="step-desc">Open the dashboard and connect your Polkadot-compatible extension like SubWallet, Polkadot.js, or Talisman.</div>
+          </div>
+          <div class="step-card">
+            <div class="step-num">02</div>
+            <div class="step-title">Acquire VARA Gas</div>
+            <div class="step-desc">Use the sidebar link to go to the official Vara Faucet and request testnet VARA tokens to cover messaging transactions.</div>
+          </div>
+          <div class="step-card">
+            <div class="step-num">03</div>
+            <div class="step-title">Mint GROW Tokens</div>
+            <div class="step-desc">Head to the GROW Token tab in the dashboard and mint 1,000 GROW from the testnet faucet to fund your vaults.</div>
+          </div>
+          <div class="step-card">
+            <div class="step-num">04</div>
+            <div class="step-title">Start a Stream</div>
+            <div class="step-desc">Approve the TokenVault, deposit your GROW, and define your recipient's address to initialize your first live stream.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ARCHITECTURE -->
+      <section class="docs-section" id="architecture">
+        <h1>Architecture Overview</h1>
+        <p>HyperFlow operates through a three-tier modular architecture designed for maximum performance, security, and composability.</p>
+        
+        <div class="docs-table-wrap">
+          <table class="docs-table">
+            <thead>
+              <tr>
+                <th>Module Name</th>
+                <th>Role</th>
+                <th>Security Level</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>GROW ERC20 Contract</strong></td>
+                <td>Handles the fundamental asset ledger and permissions.</td>
+                <td>Audited & Immutable</td>
+              </tr>
+              <tr>
+                <td><strong>TokenVault Contract</strong></td>
+                <td>Stores users' deposited streaming collateral in locked escrows.</td>
+                <td>Non-custodial, multisig-ready</td>
+              </tr>
+              <tr>
+                <td><strong>StreamCore Contract</strong></td>
+                <td>Orchestrates the active streams, computes flow rates, and manages withdrawals.</td>
+                <td>Dynamic calculation, Zero-custody</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>By splitting the vault and core execution layers, users can grant streaming permissions safely without placing their entire balance at risk, creating a premium standard for secure decentralized banking.</p>
+      </section>
+
+      <!-- SMART CONTRACTS -->
+      <section class="docs-section" id="contracts">
+        <h1>Vara Contract Registry</h1>
+        <p>All official contracts are deployed and verified on the Vara Testnet. You can inspect or interact with them below.</p>
+        
+        <div class="docs-table-wrap">
+          <table class="docs-table">
+            <thead>
+              <tr>
+                <th>Contract Name</th>
+                <th>Vara Program ID</th>
+                <th>Explorer</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>GROW Token</strong></td>
+                <td><code>0x05a2a482f1a1a7ebf74643f3cc2099597dac81ff92535cbd647948febee8fe36</code></td>
+                <td><a href="https://idea.gear-tech.io/programs/0x05a2a482f1a1a7ebf74643f3cc2099597dac81ff92535cbd647948febee8fe36?node=wss%3A%2F%2Ftestnet.vara.network" target="_blank" style="color:#06b6d4;text-decoration:none">View →</a></td>
+              </tr>
+              <tr>
+                <td><strong>Stream Core</strong></td>
+                <td><code>0x2e7c2064344449504c9c638261bab78238ae50b8a47faac5beae2d1915d70a56</code></td>
+                <td><a href="https://idea.gear-tech.io/programs/0x2e7c2064344449504c9c638261bab78238ae50b8a47faac5beae2d1915d70a56?node=wss%3A%2F%2Ftestnet.vara.network" target="_blank" style="color:#06b6d4;text-decoration:none">View →</a></td>
+              </tr>
+              <tr>
+                <td><strong>Token Vault</strong></td>
+                <td><code>0x7e081c0f82e31e35d845d1932eb36c84bbbb50568eef3c209f7104fabb2c254b</code></td>
+                <td><a href="https://idea.gear-tech.io/programs/0x7e081c0f82e31e35d845d1932eb36c84bbbb50568eef3c209f7104fabb2c254b?node=wss%3A%2F%2Ftestnet.vara.network" target="_blank" style="color:#06b6d4;text-decoration:none">View →</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- REST API -->
+      <section class="docs-section" id="api">
+        <h1>REST API Reference</h1>
+        <p>Integrate HyperFlow metrics directly into your server or backend systems using our globally hosted production endpoints.</p>
+        
+        <h2>API Base URL</h2>
+        <div class="code-block-wrap">
+          <div class="code-header">
+            <span>Base Endpoint</span>
+          </div>
+          <pre><code>https://growstreams-core-production.up.railway.app</code></pre>
+        </div>
+
+        <h2>Get GROW Balance</h2>
+        <p><span class="api-tag get">GET</span> <code>/api/grow-token/balance/:address</code></p>
+        <div class="code-block-wrap">
+          <div class="code-header">
+            <span>Example Response</span>
+            <button class="btn-copy" onclick="copyToClipboard(this)">Copy</button>
+          </div>
+<pre><code>{
+  <span class="c-key">"address"</span>: <span class="c-str">"0xABCD..."</span>,
+  <span class="c-key">"balance"</span>: <span class="c-str">"1250000000000000"</span>, <span class="c-com">// raw balance (12 decimals)</span>
+  <span class="c-key">"formatted"</span>: <span class="c-num">1250.0</span>
+}</code></pre>
+        </div>
+
+        <h2>Create New Stream</h2>
+        <p><span class="api-tag post">POST</span> <code>/api/streams</code></p>
+        <div class="code-block-wrap">
+          <div class="code-header">
+            <span>Request Payload</span>
+            <button class="btn-copy" onclick="copyToClipboard(this)">Copy</button>
+          </div>
+<pre><code>{
+  <span class="c-key">"sender"</span>: <span class="c-str">"0x123..."</span>,
+  <span class="c-key">"receiver"</span>: <span class="c-str">"0x456..."</span>,
+  <span class="c-key">"flowRate"</span>: <span class="c-str">"2777777777"</span>, <span class="c-com">// raw rate per second</span>
+  <span class="c-key">"deposit"</span>: <span class="c-str">"50000000000000"</span>, <span class="c-com">// collateral deposit</span>
+  <span class="c-key">"signature"</span>: <span class="c-str">"0xSignatureFromWallet"</span>
+}</code></pre>
+        </div>
+      </section>
+
+      <!-- SDK -->
+      <section class="docs-section" id="sdk">
+        <h1>SDK Integration Guide</h1>
+        <p>Integrate streams natively into your frontends using the HyperFlow JavaScript API. Leverage the lightweight SDK wraps directly from `window.API` in your dashboard scripts.</p>
+        
+        <div class="code-block-wrap">
+          <div class="code-header">
+            <span>JavaScript Integration Example</span>
+            <button class="btn-copy" onclick="copyToClipboard(this)">Copy</button>
+          </div>
+<pre><code><span class="c-com">// Initialize HyperFlow API interface</span>
+<span class="c-var">const</span> myAddress = <span class="c-str">"0xABCD..."</span>;
+
+<span class="c-com">// 1. Fetch GROW token balance</span>
+<span class="c-var">try</span> {
+  <span class="c-var">const</span> balanceInfo = <span class="c-var">await</span> API.token.balance(myAddress);
+  console.log(<span class="c-str">"GROW Balance:"</span>, API.formatGROW(balanceInfo.balance));
+} <span class="c-var">catch</span> (error) {
+  console.error(<span class="c-str">"Failed to retrieve balance:"</span>, error);
+}
+
+<span class="c-com">// 2. Query active streams for sender</span>
+<span class="c-var">const</span> streams = <span class="c-var">await</span> API.streams.bySender(myAddress);
+console.log(<span class="c-str">"Total Outgoing Streams:"</span>, streams.length);</code></pre>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom" style="border-top:none;padding-top:0">
+        <span>© 2026 HyperFlow Protocol. All rights reserved.</span>
+        <div class="footer-bottom-links">
+          <a href="index.html">Home</a>
+          <a href="app.html">App Dashboard</a>
+          <a href="https://vara.network" target="_blank">Built on Vara</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="api.js"></script>
+  <script>
+    /* Simple script for active navigation highlight & copy code */
+    document.querySelectorAll('.sidebar-link').forEach(link => {
+      link.addEventListener('click', function(e) {
+        document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+        this.classList.add('active');
+      });
+    });
+
+    function copyToClipboard(btn) {
+      const code = btn.parentElement.nextElementSibling.querySelector('code').innerText;
+      navigator.clipboard.writeText(code).then(() => {
+        btn.innerText = 'Copied!';
+        setTimeout(() => { btn.innerText = 'Copy'; }, 2000);
+      });
+    }
+
+    // Scroll reveal highlight for active section
+    window.addEventListener('scroll', () => {
+      let current = '';
+      const sections = document.querySelectorAll('.docs-section');
+      const navLinks = document.querySelectorAll('.sidebar-link');
+      
+      sections.forEach(section => {
+        const sectionTop = section.offsetTop;
+        if (pageYOffset >= sectionTop - 150) {
+          current = section.getAttribute('id');
+        }
+      });
+
+      navLinks.forEach(link => {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === `#${current}`) {
+          link.classList.add('active');
+        }
+      });
+    });
+  </script>
+</body>
+</html>
