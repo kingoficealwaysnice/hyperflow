@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>HyperFlow App — Stream Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="app-style.css"/>
+</head>
+<body>
+
+<!-- ===== WALLET MODAL ===== -->
+<div class="modal-overlay" id="wallet-modal">
+  <div class="modal-box wallet-modal-box">
+    <div class="modal-header">
+      <div class="modal-logo">
+        <svg width="22" height="22" viewBox="0 0 28 28" fill="none">
+          <path d="M4 14 C4 8 8 4 14 4 C18 4 21 6 23 10" stroke="url(#wLG)" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M24 14 C24 20 20 24 14 24 C10 24 7 22 5 18" stroke="url(#wLG2)" stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="14" cy="14" r="3" fill="url(#wLG)"/>
+          <defs>
+            <linearGradient id="wLG" x1="0" y1="0" x2="28" y2="28" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#06b6d4"/>
+            </linearGradient>
+            <linearGradient id="wLG2" x1="28" y1="0" x2="0" y2="28" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#a855f7"/><stop offset="100%" stop-color="#6366f1"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        Connect Wallet
+      </div>
+      <button class="modal-close" id="wallet-modal-close" aria-label="Close">✕</button>
+    </div>
+    <div id="wallet-modal-body" class="modal-body-content"></div>
+  </div>
+</div>
+
+<!-- ===== CONFIRM MODAL ===== -->
+<div class="modal-overlay" id="confirm-modal">
+  <div class="modal-box confirm-modal-box">
+    <div class="modal-header">
+      <span id="confirm-title">Confirm Action</span>
+      <button class="modal-close" id="confirm-modal-close">✕</button>
+    </div>
+    <div class="modal-body-content">
+      <p id="confirm-message" class="confirm-msg"></p>
+      <div class="confirm-btns">
+        <button class="btn-danger" id="confirm-ok-btn">Confirm</button>
+        <button class="btn-cancel" id="confirm-cancel-btn">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TOAST ===== -->
+<div id="toast-container" class="toast-container"></div>
+
+<!-- ===== SIDEBAR ===== -->
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <a href="index.html" class="logo-link">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+          <path d="M4 14 C4 8 8 4 14 4 C18 4 21 6 23 10" stroke="url(#sLG)" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M24 14 C24 20 20 24 14 24 C10 24 7 22 5 18" stroke="url(#sLG2)" stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="14" cy="14" r="3" fill="url(#sLG)"/>
+          <defs>
+            <linearGradient id="sLG" x1="0" y1="0" x2="28" y2="28" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#06b6d4"/>
+            </linearGradient>
+            <linearGradient id="sLG2" x1="28" y1="0" x2="0" y2="28" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#a855f7"/><stop offset="100%" stop-color="#6366f1"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        <span class="logo-text">HyperFlow</span>
+      </a>
+      <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle sidebar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+    </div>
+
+    <nav class="sidebar-nav">
+      <button class="nav-item active" data-tab="overview" id="tab-overview">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        <span>Overview</span>
+      </button>
+      <button class="nav-item" data-tab="outgoing" id="tab-outgoing">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        <span>Outgoing Streams</span>
+      </button>
+      <button class="nav-item" data-tab="incoming" id="tab-incoming">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span>Incoming Streams</span>
+      </button>
+      <button class="nav-item" data-tab="create" id="tab-create">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        <span>Create Stream</span>
+      </button>
+      <button class="nav-item" data-tab="vault" id="tab-vault">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <span>Vault</span>
+      </button>
+      <button class="nav-item" data-tab="grow" id="tab-grow">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        <span>GROW Token</span>
+      </button>
+      <button class="nav-item" data-tab="leaderboard" id="tab-leaderboard">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <span>Leaderboard</span>
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <a href="https://idea.gear-tech.io/programs?node=wss%3A%2F%2Ftestnet.vara.network" target="_blank" class="sidebar-external">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        Vara Faucet
+      </a>
+      <a href="https://www.subwallet.app/" target="_blank" class="sidebar-external">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        SubWallet
+      </a>
+    </div>
+  </aside>
+
+  <!-- ===== MAIN CONTENT ===== -->
+  <div class="main-wrap">
+
+    <!-- TOP BAR -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <h1 class="page-title" id="page-title">Overview</h1>
+        <span class="network-badge">
+          <span class="net-dot"></span>
+          Vara Testnet
+        </span>
+      </div>
+      <div class="topbar-right">
+        <div class="topbar-wallet" id="topbar-wallet">
+          <!-- populated by JS -->
+          <button class="btn-connect-top" id="topbar-connect-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            Connect Wallet
+          </button>
+        </div>
+        <button class="topbar-refresh" id="refresh-btn" title="Refresh data">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- PAGE CONTENT AREA -->
+    <main class="content-area">
+
+      <!-- ===== OVERVIEW TAB ===== -->
+      <div class="tab-content active" id="tab-content-overview">
+        <!-- Stats Row -->
+        <div class="stats-row" id="stats-row">
+          <div class="stat-card">
+            <div class="stat-icon-wrap cyan">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-val" id="stat-active-streams">—</span>
+              <span class="stat-lbl">Active Streams</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon-wrap indigo">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-val" id="stat-grow-balance">—</span>
+              <span class="stat-lbl">GROW Balance</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon-wrap purple">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-val" id="stat-vault-balance">—</span>
+              <span class="stat-lbl">Vault Balance</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon-wrap gold">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-val" id="stat-total-streams">—</span>
+              <span class="stat-lbl">Total Streams</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Not Connected Banner -->
+        <div class="not-connected-banner" id="not-connected-banner">
+          <div class="ncb-icon">🔌</div>
+          <h3>Connect Your Wallet</h3>
+          <p>Connect a Polkadot-compatible wallet (SubWallet, Polkadot.js) to access HyperFlow.</p>
+          <button class="btn-primary-app" id="ncb-connect-btn">Connect Wallet</button>
+        </div>
+
+        <!-- Recent Streams (shown when connected) -->
+        <div class="section-block hidden" id="overview-streams-section">
+          <div class="section-head">
+            <h2 class="section-h2">Your Streams</h2>
+            <button class="btn-sm-primary" id="overview-create-btn">+ New Stream</button>
+          </div>
+          <div id="overview-streams-list" class="stream-list">
+            <div class="list-loading"><div class="spinner"></div> Loading streams...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== OUTGOING STREAMS TAB ===== -->
+      <div class="tab-content" id="tab-content-outgoing">
+        <div class="tab-header-bar">
+          <h2 class="tab-h2">Outgoing Streams</h2>
+          <button class="btn-sm-primary" id="outgoing-create-btn">+ Create Stream</button>
+        </div>
+        <div class="section-block">
+          <div id="outgoing-streams-list" class="stream-list">
+            <div class="list-loading"><div class="spinner"></div> Loading...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== INCOMING STREAMS TAB ===== -->
+      <div class="tab-content" id="tab-content-incoming">
+        <div class="tab-header-bar">
+          <h2 class="tab-h2">Incoming Streams</h2>
+          <p class="tab-desc">Streams where you are the receiver. Withdraw accrued tokens anytime.</p>
+        </div>
+        <div class="section-block">
+          <div id="incoming-streams-list" class="stream-list">
+            <div class="list-loading"><div class="spinner"></div> Loading...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== CREATE STREAM TAB ===== -->
+      <div class="tab-content" id="tab-content-create">
+        <div class="tab-header-bar">
+          <h2 class="tab-h2">Create a Stream</h2>
+          <p class="tab-desc">Start a new per-second token stream to any address on Vara.</p>
+        </div>
+        <div class="form-card">
+          <div class="form-grid">
+            <div class="form-group full-width">
+              <label for="cs-receiver">Receiver Address</label>
+              <input type="text" id="cs-receiver" placeholder="0x... (Vara account address)" autocomplete="off"/>
+              <span class="form-hint">The address that will receive the token stream</span>
+            </div>
+            <div class="form-group">
+              <label for="cs-token">Token</label>
+              <select id="cs-token">
+                <option value="0x05a2a482f1a1a7ebf74643f3cc2099597dac81ff92535cbd647948febee8fe36">GROW Token</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="cs-flow-rate">Flow Rate</label>
+              <div class="input-with-unit">
+                <input type="number" id="cs-flow-rate" placeholder="0.01" step="0.001" min="0"/>
+                <span class="input-unit">GROW / hr</span>
+              </div>
+              <span class="form-hint" id="cs-flow-hint">≈ 0.0000028 GROW/sec</span>
+            </div>
+            <div class="form-group">
+              <label for="cs-deposit">Initial Deposit</label>
+              <div class="input-with-unit">
+                <input type="number" id="cs-deposit" placeholder="100" step="0.1" min="0"/>
+                <span class="input-unit">GROW</span>
+              </div>
+              <span class="form-hint" id="cs-deposit-hint">Min buffer: 1 hr of flow rate</span>
+            </div>
+          </div>
+
+          <div class="stream-preview" id="stream-preview">
+            <div class="preview-row">
+              <span>Flow Rate</span>
+              <span id="preview-rate">—</span>
+            </div>
+            <div class="preview-row">
+              <span>Duration</span>
+              <span id="preview-duration">—</span>
+            </div>
+            <div class="preview-row">
+              <span>Min Buffer Required</span>
+              <span id="preview-buffer">—</span>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button class="btn-primary-app btn-full" id="create-stream-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+              Create Stream
+            </button>
+            <p class="form-note">Tokens will be drawn from your vault balance. Make sure you have enough GROW deposited.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== VAULT TAB ===== -->
+      <div class="tab-content" id="tab-content-vault">
+        <div class="tab-header-bar">
+          <h2 class="tab-h2">Token Vault</h2>
+          <p class="tab-desc">Deposit GROW tokens into the vault to fund your streams.</p>
+        </div>
+        <div class="vault-grid">
+          <div class="form-card">
+            <h3 class="form-card-title">
+              <span class="fct-dot cyan"></span>Vault Balance
+            </h3>
+            <div class="vault-balance-display">
+              <span class="vbd-amount" id="vault-deposited">—</span>
+              <span class="vbd-label">GROW Deposited</span>
+            </div>
+            <div class="vault-sub-row">
+              <div class="vsub">
+                <span class="vsub-label">Available</span>
+                <span class="vsub-val" id="vault-available">—</span>
+              </div>
+              <div class="vsub">
+                <span class="vsub-label">Allocated</span>
+                <span class="vsub-val" id="vault-allocated">—</span>
+              </div>
+            </div>
+            <button class="btn-outline-app" id="vault-refresh-btn">Refresh Balances</button>
+          </div>
+          <div class="form-card">
+            <h3 class="form-card-title">
+              <span class="fct-dot indigo"></span>Deposit Tokens
+            </h3>
+            <div class="form-group">
+              <label for="vault-deposit-amount">Amount (GROW)</label>
+              <div class="input-with-unit">
+                <input type="number" id="vault-deposit-amount" placeholder="100" step="1" min="0"/>
+                <span class="input-unit">GROW</span>
+              </div>
+              <span class="form-hint">Wallet balance: <span id="wallet-grow-balance">—</span> GROW</span>
+            </div>
+            <button class="btn-primary-app" id="vault-deposit-btn">Deposit to Vault</button>
+          </div>
+          <div class="form-card">
+            <h3 class="form-card-title">
+              <span class="fct-dot purple"></span>Withdraw Tokens
+            </h3>
+            <div class="form-group">
+              <label for="vault-withdraw-amount">Amount (GROW)</label>
+              <div class="input-with-unit">
+                <input type="number" id="vault-withdraw-amount" placeholder="50" step="1" min="0"/>
+                <span class="input-unit">GROW</span>
+              </div>
+              <span class="form-hint">Only available (non-allocated) balance can be withdrawn.</span>
+            </div>
+            <button class="btn-danger-app" id="vault-withdraw-btn">Withdraw from Vault</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== GROW TOKEN TAB ===== -->
+      <div class="tab-content" id="tab-content-grow">
+        <div class="tab-header-bar">
+          <h2 class="tab-h2">GROW Token</h2>
+          <p class="tab-desc">Manage your GROW tokens on Vara Testnet.</p>
+        </div>
+        <div class="grow-grid">
+          <div class="form-card token-info-card">
+            <h3 class="form-card-title"><span class="fct-dot cyan"></span>Token Info</h3>
+            <div class="token-info-rows" id="token-info-rows">
+              <div class="list-loading"><div class="spinner"></div> Loading token info...</div>
+            </div>
+          </div>
+          <div class="form-card">
+            <h3 class="form-card-title"><span class="fct-dot indigo"></span>Faucet (Testnet)</h3>
+            <p class="card-desc">Mint 1,000 GROW tokens from the testnet faucet. Rate limited.</p>
+            <div class="form-group">
+              <label>Your Address</label>
+              <div class="addr-display" id="faucet-addr-display">Connect wallet first</div>
+            </div>
+            <button class="btn-primary-app" id="faucet-btn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20"/></svg>
+              Mint 1,000 GROW
+            </button>
+          </div>
+          <div class="form-card">
+            <h3 class="form-card-title"><span class="fct-dot purple"></span>Approve Vault</h3>
+            <p class="card-desc">Approve the TokenVault contract to spend your GROW tokens (required before depositing).</p>
+            <div class="form-group">
+              <label for="approve-amount">Amount to Approve</label>
+              <div class="input-with-unit">
+                <input type="number" id="approve-amount" placeholder="10000" step="100" min="0"/>
+                <span class="input-unit">GROW</span>
+              </div>
+            </div>
+            <button class="btn-primary-app" id="approve-btn">Approve Vault Spending</button>
+            <div class="form-group" style="margin-top:16px">
+              <label>Current Allowance</label>
+              <div class="addr-display" id="allowance-display">—</div>
+            </div>
+          </div>
+          <div class="form-card">
+            <h3 class="form-card-title"><span class="fct-dot gold"></span>Transfer GROW</h3>
+            <div class="form-group">
+              <label for="transfer-to">Recipient Address</label>
+              <input type="text" id="transfer-to" placeholder="0x..."/>
+            </div>
+            <div class="form-group">
+              <label for="transfer-amount">Amount (GROW)</label>
+              <div class="input-with-unit">
+                <input type="number" id="transfer-amount" placeholder="10" step="0.01"/>
+                <span class="input-unit">GROW</span>
+              </div>
+            </div>
+            <button class="btn-outline-app" id="transfer-btn">Transfer GROW</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== LEADERBOARD TAB ===== -->
+      <div class="tab-content" id="tab-content-leaderboard">
+        <div class="tab-header-bar">
+          <h2 class="tab-h2">Campaign Leaderboard</h2>
+          <p class="tab-desc">Top contributors earn XP and USDC rewards. Join the campaign!</p>
+        </div>
+        <div class="leaderboard-wrap">
+          <div class="lb-controls">
+            <div class="lb-filters">
+              <button class="lb-filter active" data-track="ALL">All</button>
+              <button class="lb-filter" data-track="OSS">OSS Track</button>
+              <button class="lb-filter" data-track="CONTENT">Content Track</button>
+            </div>
+            <button class="btn-outline-app btn-sm" id="lb-refresh-btn">Refresh</button>
+          </div>
+          <div class="lb-stats-row" id="lb-stats-row">
+            <div class="lb-stat"><span class="lb-stat-val" id="lb-total-participants">—</span><span class="lb-stat-lbl">Participants</span></div>
+            <div class="lb-stat"><span class="lb-stat-val" id="lb-total-xp">—</span><span class="lb-stat-lbl">Total XP</span></div>
+            <div class="lb-stat"><span class="lb-stat-val" id="lb-prize-pool">—</span><span class="lb-stat-lbl">Prize Pool (USDC)</span></div>
+          </div>
+          <div class="lb-table-wrap">
+            <table class="lb-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Wallet</th>
+                  <th>GitHub</th>
+                  <th>XP</th>
+                  <th>Track</th>
+                  <th>Est. Payout</th>
+                </tr>
+              </thead>
+              <tbody id="lb-table-body">
+                <tr><td colspan="6" class="lb-loading"><div class="spinner"></div> Loading leaderboard...</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="lb-register-cta" id="lb-register-cta">
+            <div class="lrc-icon">🏆</div>
+            <h3>Join the Campaign</h3>
+            <p>Earn XP by contributing to GrowStreams/HyperFlow — submit PRs or create content. Connect your wallet to register.</p>
+            <button class="btn-primary-app" id="lb-register-btn">Register for Campaign</button>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- ===== STREAM ACTION MODAL ===== -->
+<div class="modal-overlay" id="stream-action-modal">
+  <div class="modal-box stream-action-box">
+    <div class="modal-header">
+      <span id="sam-title">Stream Details</span>
+      <button class="modal-close" id="sam-close">✕</button>
+    </div>
+    <div id="sam-body" class="modal-body-content"></div>
+  </div>
+</div>
+
+<script src="wallet.js"></script>
+<script src="api.js"></script>
+<script src="app-logic.js"></script>
+</body>
+</html>

@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HyperFlow — Real-Time Token Streaming on Vara</title>
+  <meta name="description" content="HyperFlow is a next-generation token streaming protocol on Vara. Stream payments per-second for payroll, bounties, subscriptions, grants, and more." />
+  <meta property="og:title" content="HyperFlow — Real-Time Token Streaming on Vara" />
+  <meta property="og:description" content="Per-second token streaming on Vara. Payroll, bounties, subscriptions, revenue share — powered by hyper-speed streams." />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="HyperFlow — Real-Time Token Streaming on Vara" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* Landing-page wallet modal extra styles */
+    .lp-wallet-modal-overlay {
+      position: fixed; inset: 0; z-index: 9999;
+      background: rgba(0,0,0,0.75); backdrop-filter: blur(10px);
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px; opacity: 0; pointer-events: none;
+      transition: opacity 0.25s;
+    }
+    .lp-wallet-modal-overlay.active { opacity: 1; pointer-events: all; }
+    .lp-modal-box {
+      background: #0a0a1a; border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px; width: 100%; max-width: 420px;
+      box-shadow: 0 40px 100px rgba(0,0,0,0.6);
+      transform: scale(0.96) translateY(10px);
+      transition: transform 0.25s;
+      overflow: hidden;
+    }
+    .lp-wallet-modal-overlay.active .lp-modal-box { transform: scale(1) translateY(0); }
+    .lp-modal-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px 24px; border-bottom: 1px solid rgba(255,255,255,0.08);
+      font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1rem;
+      color: #f1f5f9;
+    }
+    .lp-modal-close {
+      width: 30px; height: 30px; border-radius: 6px;
+      background: none; border: 1px solid rgba(255,255,255,0.08);
+      color: #64748b; cursor: pointer; font-size: 0.85rem;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+    }
+    .lp-modal-close:hover { color: #f1f5f9; }
+    .lp-modal-body { padding: 24px; }
+  </style>
+</head>
+<body>
+
+  <!-- ===== WALLET MODAL (LANDING) ===== -->
+  <div class="lp-wallet-modal-overlay" id="lp-wallet-modal">
+    <div class="lp-modal-box">
+      <div class="lp-modal-head">
+        <span>Connect Wallet</span>
+        <button class="lp-modal-close" id="lp-wallet-close">✕</button>
+      </div>
+      <div class="lp-modal-body" id="lp-wallet-body"></div>
+    </div>
+  </div>
+
+  <!-- ===== CANVAS BACKGROUND ===== -->
+  <canvas id="particleCanvas"></canvas>
+
+  <!-- ===== NOISE OVERLAY ===== -->
+  <div class="noise-overlay"></div>
+
+  <!-- ===== NAVIGATION ===== -->
+  <nav id="navbar" class="navbar">
+    <div class="nav-container">
+      <a href="#" class="nav-logo" id="nav-logo">
+        <div class="logo-icon">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+            <path d="M4 14 C4 8 8 4 14 4 C18 4 21 6 23 10" stroke="url(#logoGrad)" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M24 14 C24 20 20 24 14 24 C10 24 7 22 5 18" stroke="url(#logoGrad2)" stroke-width="2.5" stroke-linecap="round"/>
+            <circle cx="14" cy="14" r="3" fill="url(#logoGrad)"/>
+            <path d="M9 11 L14 14 L19 11" stroke="url(#logoGrad2)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <defs>
+              <linearGradient id="logoGrad" x1="0" y1="0" x2="28" y2="28" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#6366f1"/>
+                <stop offset="100%" stop-color="#06b6d4"/>
+              </linearGradient>
+              <linearGradient id="logoGrad2" x1="28" y1="0" x2="0" y2="28" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#a855f7"/>
+                <stop offset="100%" stop-color="#6366f1"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <span class="logo-text">HyperFlow</span>
+      </a>
+
+      <ul class="nav-links" id="nav-links">
+        <li><a href="#use-cases" class="nav-link">Use Cases</a></li>
+        <li><a href="#how-it-works" class="nav-link">How It Works</a></li>
+        <li><a href="#features" class="nav-link">Features</a></li>
+        <li><a href="#docs" class="nav-link">Docs</a></li>
+      </ul>
+
+      <div class="nav-actions">
+        <a href="#" class="btn-ghost" id="nav-github">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+          GitHub
+        </a>
+        <button class="btn-primary" id="connect-wallet-btn">
+          <span class="btn-shimmer"></span>
+          Connect Wallet
+        </button>
+      </div>
+
+      <button class="nav-hamburger" id="hamburger" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ===== HERO ===== -->
+  <section class="hero" id="home">
+    <div class="hero-grid-overlay"></div>
+
+    <div class="hero-container">
+      <div class="hero-badge">
+        <span class="badge-dot"></span>
+        Live on Vara Network
+        <span class="badge-arrow">→</span>
+      </div>
+
+      <h1 class="hero-title">
+        Money That Flows
+        <span class="title-gradient">Every Second.</span>
+      </h1>
+
+      <p class="hero-subtitle">
+        HyperFlow is a hyper-speed token streaming protocol on Vara. Stream payroll, bounties, subscriptions,
+        and revenue share — all settled <em>per-second</em>, on-chain.
+      </p>
+
+      <div class="hero-cta">
+        <button class="btn-primary btn-lg" id="launch-app-btn">
+          <span class="btn-shimmer"></span>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5,3 19,12 5,21"/></svg>
+          Launch App
+        </button>
+        <a href="#how-it-works" class="btn-outline btn-lg" id="learn-more-btn">
+          Explore Protocol
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+        </a>
+      </div>
+
+      <!-- Live Stream Counter -->
+      <div class="hero-stream-counter" id="stream-counter">
+        <div class="counter-card" id="counter-tvl">
+          <span class="counter-label">Total Value Streamed</span>
+          <span class="counter-value" data-target="4820391">$0</span>
+          <span class="counter-suffix">USD</span>
+        </div>
+        <div class="counter-divider"></div>
+        <div class="counter-card" id="counter-streams">
+          <span class="counter-label">Active Streams</span>
+          <span class="counter-value" data-target="1247">0</span>
+          <span class="counter-tick" id="tick-dot">●</span>
+        </div>
+        <div class="counter-divider"></div>
+        <div class="counter-card" id="counter-rate">
+          <span class="counter-label">Flow Rate</span>
+          <span class="counter-value" id="flow-rate">$0.00</span>
+          <span class="counter-suffix">/sec</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hero Visual - Stream Visualizer -->
+    <div class="hero-visual">
+      <canvas id="streamCanvas"></canvas>
+      <div class="visual-glow"></div>
+    </div>
+
+    <div class="hero-scroll-hint">
+      <div class="scroll-line"></div>
+      <span>Scroll</span>
+    </div>
+  </section>
+
+  <!-- ===== MARQUEE STRIP ===== -->
+  <div class="marquee-strip">
+    <div class="marquee-track">
+      <div class="marquee-content">
+        <span class="marquee-item"><span class="marquee-dot cyan"></span> Vara Network</span>
+        <span class="marquee-item"><span class="marquee-dot indigo"></span> Per-Second Payments</span>
+        <span class="marquee-item"><span class="marquee-dot purple"></span> Token Agnostic</span>
+        <span class="marquee-item"><span class="marquee-dot cyan"></span> Non-Custodial</span>
+        <span class="marquee-item"><span class="marquee-dot indigo"></span> Composable</span>
+        <span class="marquee-item"><span class="marquee-dot purple"></span> Open Source</span>
+        <span class="marquee-item"><span class="marquee-dot cyan"></span> Gasless UX</span>
+        <span class="marquee-item"><span class="marquee-dot indigo"></span> Real-Time Settlement</span>
+        <span class="marquee-item"><span class="marquee-dot cyan"></span> Vara Network</span>
+        <span class="marquee-item"><span class="marquee-dot indigo"></span> Per-Second Payments</span>
+        <span class="marquee-item"><span class="marquee-dot purple"></span> Token Agnostic</span>
+        <span class="marquee-item"><span class="marquee-dot cyan"></span> Non-Custodial</span>
+        <span class="marquee-item"><span class="marquee-dot indigo"></span> Composable</span>
+        <span class="marquee-item"><span class="marquee-dot purple"></span> Open Source</span>
+        <span class="marquee-item"><span class="marquee-dot cyan"></span> Gasless UX</span>
+        <span class="marquee-item"><span class="marquee-dot indigo"></span> Real-Time Settlement</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== USE CASES ===== -->
+  <section class="section use-cases" id="use-cases">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Use Cases</span>
+        <h2 class="section-title">Stream Anything,<br/><span class="text-gradient">Anywhere.</span></h2>
+        <p class="section-subtitle">HyperFlow powers every form of continuous value transfer. From team payroll to protocol grants — if money needs to move over time, HyperFlow handles it.</p>
+      </div>
+
+      <div class="use-cases-grid" id="use-cases-grid">
+
+        <div class="use-case-card card-featured" data-aos>
+          <div class="card-glow"></div>
+          <div class="card-icon-wrap" style="--icon-color: #6366f1;">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <h3 class="card-title">Payroll Streaming</h3>
+          <p class="card-desc">Pay your team in real-time. Every block that passes, tokens flow directly to wallets — no monthly batch transactions, no delays.</p>
+          <div class="card-tag">Most Popular</div>
+          <div class="card-footer-metric">
+            <span class="metric-val">~2,400</span>
+            <span class="metric-lbl">active payroll streams</span>
+          </div>
+        </div>
+
+        <div class="use-case-card" data-aos>
+          <div class="card-icon-wrap" style="--icon-color: #06b6d4;">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          </div>
+          <h3 class="card-title">Bounty Delivery</h3>
+          <p class="card-desc">Stream rewards to contributors as milestones are hit. Cancel mid-stream if deliverables aren't met — zero trust required.</p>
+        </div>
+
+        <div class="use-case-card" data-aos>
+          <div class="card-icon-wrap" style="--icon-color: #a855f7;">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+          </div>
+          <h3 class="card-title">Subscriptions</h3>
+          <p class="card-desc">Replace monthly billing with continuous micro-flows. Users pay exactly for what they consume, second by second.</p>
+        </div>
+
+        <div class="use-case-card" data-aos>
+          <div class="card-icon-wrap" style="--icon-color: #f59e0b;">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          </div>
+          <h3 class="card-title">Revenue Share</h3>
+          <p class="card-desc">Distribute protocol income to stakeholders in real-time. Investors, LPs, and contributors receive their fair share every block.</p>
+        </div>
+
+        <div class="use-case-card" data-aos>
+          <div class="card-icon-wrap" style="--icon-color: #10b981;">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+          </div>
+          <h3 class="card-title">Grants</h3>
+          <p class="card-desc">DAOs stream grants to grantees over time, ensuring accountability. Stop the stream if milestones aren't delivered.</p>
+        </div>
+
+        <div class="use-case-card" data-aos>
+          <div class="card-icon-wrap" style="--icon-color: #ec4899;">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </div>
+          <h3 class="card-title">Token Vesting</h3>
+          <p class="card-desc">Replace cliff vesting schedules with smooth, continuous token release. Founders and investors receive tokens as they vest — live.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== HOW IT WORKS ===== -->
+  <section class="section how-it-works" id="how-it-works">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Protocol</span>
+        <h2 class="section-title">Three Steps to<br/><span class="text-gradient">Hyper-Speed Finance.</span></h2>
+      </div>
+
+      <div class="steps-container">
+        <div class="steps-line"></div>
+
+        <div class="step-item" data-aos id="step-1">
+          <div class="step-number">01</div>
+          <div class="step-card">
+            <div class="step-icon">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            </div>
+            <h3>Create a Stream</h3>
+            <p>Define the recipient, token, total amount, and duration. HyperFlow computes a per-second flow rate automatically.</p>
+            <div class="step-code">
+              <span class="code-label">Stream Config</span>
+              <code><span class="c-purple">recipient</span>: <span class="c-cyan">0xABCD...</span><br/><span class="c-purple">token</span>: <span class="c-cyan">VARA</span><br/><span class="c-purple">amount</span>: <span class="c-indigo">10,000</span><br/><span class="c-purple">duration</span>: <span class="c-indigo">30d</span></code>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-item step-right" data-aos id="step-2">
+          <div class="step-number">02</div>
+          <div class="step-card">
+            <div class="step-icon">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            </div>
+            <h3>Tokens Flow Live</h3>
+            <p>The protocol continuously transfers micro-amounts every block. Recipients can see their balance grow in real-time with no action needed.</p>
+            <div class="step-visual-flow">
+              <div class="flow-node sender">Sender</div>
+              <div class="flow-stream">
+                <div class="flow-particle"></div>
+                <div class="flow-particle"></div>
+                <div class="flow-particle"></div>
+                <div class="flow-line"></div>
+              </div>
+              <div class="flow-node receiver">Recipient</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-item" data-aos id="step-3">
+          <div class="step-number">03</div>
+          <div class="step-card">
+            <div class="step-icon">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </div>
+            <h3>Withdraw Anytime</h3>
+            <p>Recipients withdraw their accrued tokens whenever they want. Senders can top-up, pause, or cancel streams with a single transaction.</p>
+            <div class="step-actions">
+              <span class="action-pill pill-cyan">Withdraw</span>
+              <span class="action-pill pill-indigo">Pause</span>
+              <span class="action-pill pill-purple">Cancel</span>
+              <span class="action-pill pill-gold">Top-Up</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== STREAM DEMO ===== -->
+  <section class="section stream-demo" id="demo">
+    <div class="container">
+      <div class="demo-wrapper">
+        <div class="demo-content">
+          <span class="section-tag">Live Demo</span>
+          <h2 class="section-title">Watch Your Balance<br/><span class="text-gradient">Grow in Real-Time.</span></h2>
+          <p class="section-subtitle">HyperFlow updates your balance every block — roughly every 500ms. No more waiting for month-end payouts.</p>
+          <a href="#" class="btn-primary" id="try-demo-btn">
+            <span class="btn-shimmer"></span>
+            Try Live Demo
+          </a>
+        </div>
+
+        <div class="demo-widget">
+          <div class="widget-header">
+            <div class="widget-dots">
+              <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+            </div>
+            <span class="widget-title">Active Stream #1247</span>
+            <span class="widget-status">
+              <span class="status-pulse"></span>
+              Live
+            </span>
+          </div>
+
+          <div class="widget-body">
+            <div class="widget-row">
+              <span class="wr-label">From</span>
+              <span class="wr-val addr">0x4a3f...c8d2</span>
+            </div>
+            <div class="widget-row">
+              <span class="wr-label">To</span>
+              <span class="wr-val addr">0x9b1e...77fa</span>
+            </div>
+            <div class="widget-row">
+              <span class="wr-label">Token</span>
+              <span class="wr-val token-chip">VARA</span>
+            </div>
+            <div class="widget-row">
+              <span class="wr-label">Duration</span>
+              <span class="wr-val">30 days</span>
+            </div>
+            <div class="widget-divider"></div>
+            <div class="widget-balance">
+              <span class="balance-label">Streamed so far</span>
+              <span class="balance-amount" id="stream-balance">5,284.3847214</span>
+              <span class="balance-token">VARA</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill" id="stream-progress" style="width: 52.84%"></div>
+            </div>
+            <div class="progress-labels">
+              <span>0 VARA</span>
+              <span>52.84%</span>
+              <span>10,000 VARA</span>
+            </div>
+            <button class="btn-withdraw" id="withdraw-btn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Withdraw Streamed Tokens
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FEATURES ===== -->
+  <section class="section features" id="features">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Features</span>
+        <h2 class="section-title">Built for Speed.<br/><span class="text-gradient">Engineered for Trust.</span></h2>
+      </div>
+
+      <div class="features-grid" id="features-grid">
+
+        <div class="feature-card" data-aos>
+          <div class="feature-icon" style="--fc: #6366f1;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          </div>
+          <h4>Per-Second Settlement</h4>
+          <p>Tokens transfer continuously every block (~500ms). No batching, no delays — pure real-time finance.</p>
+        </div>
+
+        <div class="feature-card" data-aos>
+          <div class="feature-icon" style="--fc: #06b6d4;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+          </div>
+          <h4>Token Agnostic</h4>
+          <p>Stream any fungible token on Vara. VARA, wrapped assets, governance tokens — HyperFlow handles them all.</p>
+        </div>
+
+        <div class="feature-card" data-aos>
+          <div class="feature-icon" style="--fc: #a855f7;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <h4>Non-Custodial</h4>
+          <p>Tokens never leave your wallet until the stream is active. HyperFlow holds nothing — smart contracts handle everything.</p>
+        </div>
+
+        <div class="feature-card" data-aos>
+          <div class="feature-icon" style="--fc: #f59e0b;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          </div>
+          <h4>Composable by Design</h4>
+          <p>HyperFlow is a primitive. Build on top of streams with any DeFi protocol — lending, staking, governance, and more.</p>
+        </div>
+
+        <div class="feature-card" data-aos>
+          <div class="feature-icon" style="--fc: #10b981;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          </div>
+          <h4>Multi-Stream Support</h4>
+          <p>One address can run hundreds of concurrent streams simultaneously — as sender or receiver — with no performance cost.</p>
+        </div>
+
+        <div class="feature-card" data-aos>
+          <div class="feature-icon" style="--fc: #ec4899;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+          </div>
+          <h4>Gasless UX</h4>
+          <p>Meta-transaction support means recipients can withdraw without holding VARA for gas. Smooth onboarding for everyone.</p>
+        </div>
+
+        <div class="feature-card" data-aos>
+          <div class="feature-icon" style="--fc: #6366f1;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          </div>
+          <h4>Granular Control</h4>
+          <p>Pause, resume, modify flow rates, or cancel streams at any point. Complete sovereignty over every stream you create.</p>
+        </div>
+
+        <div class="feature-card" data-aos>
+          <div class="feature-icon" style="--fc: #06b6d4;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          </div>
+          <h4>Audited Smart Contracts</h4>
+          <p>All HyperFlow contracts are open-source and audited by leading security firms. Trustless by design, safe by audit.</p>
+        </div>
+
+        <div class="feature-card feature-wide" data-aos>
+          <div class="feature-icon" style="--fc: #a855f7;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          </div>
+          <h4>Vara-Native Architecture</h4>
+          <p>Built specifically for Vara's actor-model messaging system. HyperFlow leverages Vara's unique async messaging to deliver streams that outperform any EVM-based alternative.</p>
+          <div class="feature-wide-badge">Native Vara</div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== STATS SECTION ===== -->
+  <section class="section stats-section" id="stats">
+    <div class="container">
+      <div class="stats-grid">
+        <div class="stat-item" data-aos>
+          <div class="stat-icon cyan">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+          </div>
+          <span class="stat-number" data-target="4820391" data-prefix="$" data-suffix="">$0</span>
+          <span class="stat-label">Total Streamed</span>
+        </div>
+        <div class="stat-item" data-aos>
+          <div class="stat-icon indigo">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          </div>
+          <span class="stat-number" data-target="1247" data-prefix="" data-suffix="">0</span>
+          <span class="stat-label">Active Streams</span>
+        </div>
+        <div class="stat-item" data-aos>
+          <div class="stat-icon purple">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <span class="stat-number" data-target="892" data-prefix="" data-suffix="">0</span>
+          <span class="stat-label">Unique Users</span>
+        </div>
+        <div class="stat-item" data-aos>
+          <div class="stat-icon gold">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </div>
+          <span class="stat-number" data-target="6" data-prefix="" data-suffix=" protocols">0</span>
+          <span class="stat-label">Integrated Protocols</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== CTA SECTION ===== -->
+  <section class="section cta-section" id="cta">
+    <div class="container">
+      <div class="cta-wrapper">
+        <div class="cta-glow-1"></div>
+        <div class="cta-glow-2"></div>
+        <div class="cta-content">
+          <div class="cta-tag">Ready to Flow?</div>
+          <h2 class="cta-title">Start Streaming Tokens<br/>in Under 60 Seconds.</h2>
+          <p class="cta-subtitle">Join hundreds of teams and DAOs streaming payments on Vara. No complicated setup — just connect your wallet and go.</p>
+          <div class="cta-btns">
+            <button class="btn-primary btn-lg" id="cta-launch-btn">
+              <span class="btn-shimmer"></span>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5,3 19,12 5,21"/></svg>
+              Launch HyperFlow
+            </button>
+            <a href="#" class="btn-ghost btn-lg" id="cta-docs-btn">
+              Read the Docs
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            </a>
+          </div>
+          <div class="cta-footnote">Non-custodial · Open Source · Audited</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="footer" id="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a href="#" class="nav-logo">
+            <div class="logo-icon">
+              <svg width="24" height="24" viewBox="0 0 28 28" fill="none">
+                <path d="M4 14 C4 8 8 4 14 4 C18 4 21 6 23 10" stroke="url(#fLogoGrad)" stroke-width="2.5" stroke-linecap="round"/>
+                <path d="M24 14 C24 20 20 24 14 24 C10 24 7 22 5 18" stroke="url(#fLogoGrad2)" stroke-width="2.5" stroke-linecap="round"/>
+                <circle cx="14" cy="14" r="3" fill="url(#fLogoGrad)"/>
+                <defs>
+                  <linearGradient id="fLogoGrad" x1="0" y1="0" x2="28" y2="28" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#06b6d4"/>
+                  </linearGradient>
+                  <linearGradient id="fLogoGrad2" x1="28" y1="0" x2="0" y2="28" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stop-color="#a855f7"/><stop offset="100%" stop-color="#6366f1"/>
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
+            <span class="logo-text">HyperFlow</span>
+          </a>
+          <p class="footer-tagline">Real-time token streaming protocol on Vara Network. Built for the future of value transfer.</p>
+          <div class="footer-socials">
+            <a href="#" class="social-icon" aria-label="Twitter" id="footer-twitter">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+            </a>
+            <a href="#" class="social-icon" aria-label="GitHub" id="footer-github">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+            </a>
+            <a href="#" class="social-icon" aria-label="Discord" id="footer-discord">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.03.055a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+            </a>
+          </div>
+        </div>
+
+        <div class="footer-col">
+          <h5>Protocol</h5>
+          <ul>
+            <li><a href="#" id="footer-docs">Documentation</a></li>
+            <li><a href="#" id="footer-contracts">Smart Contracts</a></li>
+            <li><a href="#" id="footer-sdk">SDK & APIs</a></li>
+            <li><a href="#" id="footer-audit">Security Audit</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h5>Use Cases</h5>
+          <ul>
+            <li><a href="#" id="footer-payroll">Payroll</a></li>
+            <li><a href="#" id="footer-bounties">Bounties</a></li>
+            <li><a href="#" id="footer-subscriptions">Subscriptions</a></li>
+            <li><a href="#" id="footer-grants">Grants</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h5>Community</h5>
+          <ul>
+            <li><a href="#" id="footer-blog">Blog</a></li>
+            <li><a href="#" id="footer-community-discord">Discord</a></li>
+            <li><a href="#" id="footer-community-twitter">Twitter</a></li>
+            <li><a href="#" id="footer-forum">Governance Forum</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <span>© 2026 HyperFlow Protocol. All rights reserved.</span>
+        <div class="footer-bottom-links">
+          <a href="#" id="footer-privacy">Privacy</a>
+          <a href="#" id="footer-terms">Terms</a>
+          <a href="#" id="footer-vara">Built on Vara</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="wallet.js"></script>
+  <script src="api.js"></script>
+  <script src="app.js"></script>
+  <script>
+    /* ── LANDING PAGE: WIRE BUTTONS ── */
+    (function() {
+      function goToApp() { window.location.href = 'app.html'; }
+      function openLpWalletModal() {
+        const modal = document.getElementById('lp-wallet-modal');
+        const body  = document.getElementById('lp-wallet-body');
+        const exts  = WalletManager.getAvailableExtensions();
+        if (exts.length === 0) {
+          body.innerHTML = `
+            <div style="text-align:center;padding:10px 0">
+              <div style="font-size:2.5rem;margin-bottom:14px">🔌</div>
+              <h3 style="color:#f1f5f9;margin-bottom:8px">No Wallet Found</h3>
+              <p style="color:#64748b;font-size:0.88rem;margin-bottom:24px">Install SubWallet or Polkadot.js to continue.</p>
+              <div style="display:flex;flex-direction:column;gap:10px">
+                <a href="https://www.subwallet.app/" target="_blank" style="padding:12px;border-radius:12px;background:linear-gradient(135deg,#6366f1,#a855f7);color:#fff;font-weight:600;text-decoration:none;text-align:center">Install SubWallet</a>
+                <a href="https://polkadot.js.org/extension/" target="_blank" style="padding:12px;border-radius:12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);color:#f1f5f9;font-weight:600;text-decoration:none;text-align:center">Install Polkadot.js</a>
+              </div>
+            </div>`;
+        } else {
+          body.innerHTML = `
+            <p style="font-size:0.82rem;color:#64748b;margin-bottom:14px">Select your wallet to connect, then launch the app.</p>
+            ${exts.map(e => `
+              <button onclick="connectAndLaunch('${e.key}')" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;border-radius:12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#f1f5f9;font-size:0.9rem;font-weight:500;cursor:pointer;margin-bottom:8px;transition:all 0.2s" onmouseover="this.style.borderColor='#6366f1'" onmouseout="this.style.borderColor='rgba(255,255,255,0.08)'">
+                <span style="font-size:1.4rem">${e.icon}</span>
+                <span style="flex:1;text-align:left;font-weight:600">${e.name}</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+              </button>`).join('')}`;
+        }
+        modal.classList.add('active');
+      }
+
+      window.connectAndLaunch = async function(extKey) {
+        const body = document.getElementById('lp-wallet-body');
+        body.innerHTML = '<div style="text-align:center;padding:20px"><div style="width:36px;height:36px;border:3px solid rgba(255,255,255,0.1);border-top-color:#6366f1;border-radius:50%;animation:lpSpin 0.8s linear infinite;margin:0 auto 16px"></div><p style="color:#64748b">Connecting...</p></div>';
+        const style = document.createElement('style');
+        style.textContent = '@keyframes lpSpin{to{transform:rotate(360deg)}}';
+        document.head.appendChild(style);
+        try {
+          await WalletManager.enableExtension(extKey);
+          window.location.href = 'app.html';
+        } catch(e) {
+          body.innerHTML = '<p style="color:#ef4444;text-align:center;padding:20px">Connection rejected. Please approve in your wallet.</p>';
+        }
+      };
+
+      document.getElementById('lp-wallet-close')?.addEventListener('click', () => {
+        document.getElementById('lp-wallet-modal').classList.remove('active');
+      });
+      document.getElementById('lp-wallet-modal')?.addEventListener('click', e => {
+        if (e.target === e.currentTarget) e.currentTarget.classList.remove('active');
+      });
+
+      /* Wire all launch / connect buttons */
+      document.getElementById('launch-app-btn')?.addEventListener('click', goToApp);
+      document.getElementById('cta-launch-btn')?.addEventListener('click', goToApp);
+      document.getElementById('try-demo-btn')?.addEventListener('click', goToApp);
+      document.getElementById('connect-wallet-btn')?.addEventListener('click', openLpWalletModal);
+      document.getElementById('nav-github')?.setAttribute('href', 'https://github.com/BlockX-AI/GrowStreams_Backend');
+      document.getElementById('footer-github')?.setAttribute('href', 'https://github.com/BlockX-AI/GrowStreams_Backend');
+      document.getElementById('footer-vara')?.setAttribute('href', 'https://vara.network');
+      document.getElementById('footer-vara')?.setAttribute('target', '_blank');
+
+      /* Poll real stream count */
+      API.streams.active().then(r => {
+        const v = r?.count ?? r?.active ?? r;
+        if (typeof v === 'number') {
+          const el = document.querySelector('[data-target="1247"]');
+          if (el) { el.dataset.target = v; }
+        }
+      }).catch(() => {});
+    })();
+  </script>
+</body>
+</html>
